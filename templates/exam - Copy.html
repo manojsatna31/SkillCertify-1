@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+{% import "macros/ui_components.html" as ui %}
+
+{% block title %}Exam - SkillCertify{% endblock %}
+
+{% block head_extra %}
+<style>
+    .option-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        border: 2px solid #d1d5db;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-bottom: 0.75rem;
+    }
+
+    .option-item:hover {
+        border-color: rgb(var(--color-primary));
+    }
+
+    .option-item.selected {
+        border-color: rgb(var(--color-primary));
+        background-color: rgba(var(--color-primary), 0.1);
+    }
+
+    .dark .option-item {
+        border-color: #4b5563;
+    }
+
+    .dark .option-item.selected {
+        background-color: rgba(var(--color-primary), 0.2);
+    }
+
+    .option-selector {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: 2px solid #9ca3af;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+
+    .option-item.selected .option-selector {
+        border-color: rgb(var(--color-primary));
+        background-color: rgb(var(--color-primary));
+    }
+
+    .option-item.selected .option-selector::after {
+        content: "";
+        display: block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: white;
+    }
+
+    .dark .option-item.selected .option-selector::after {
+        background: #1f2937;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="exam-container py-6">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h2 class="text-xl font-bold text-gray-800 dark:text-white">
+                {{ session.exam.set_name }}
+            </h2>
+            <div class="mt-2">
+                <div class="text-sm text-gray-500 dark:text-gray-400">Time Remaining</div>
+                <div id="timer" class="text-2xl font-mono font-bold text-red-600 dark:text-red-400">
+                    89:21
+                </div>
+            </div>
+        </div>
+        <a href="{{ url_for('main.home') }}" class="btn btn-secondary text-sm">
+            ← Exit Exam
+        </a>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg mb-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-600 dark:text-gray-400">
+                Question {{ question_index + 1 }} of {{ total_questions }}
+            </h3>
+            <div class="flex space-x-2">
+                <button id="flag-btn" class="btn btn-secondary text-sm"
+                        data-question-id="{{ question.id }}">
+                    <i class="far fa-flag"></i> Review
+                </button>
+            </div>
+        </div>
+
+        <div class="text-xl font-medium mb-6 text-gray-900 dark:text-white">
+            {{ question.question_text }}
+        </div>
+
+        <div id="options-container" class="space-y-3">
+            {% for option in question.options %}
+            <div class="option-item" data-option-index="{{ loop.index0 }}">
+                <div class="option-selector"></div>
+                <div class="option-text">{{ option }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="flex justify-between items-center">
+        <button id="prev-btn" class="btn btn-primary {% if question_index == 0 %}opacity-50 cursor-not-allowed{% endif %}"
+                {% if question_index == 0 %}disabled{% endif %}>
+            Previous
+        </button>
+
+        <div class="flex space-x-2">
+            <button id="finish-exam-btn" class="btn btn-danger">
+                Finish Exam
+            </button>
+        </div>
+
+        <button id="next-btn" class="btn btn-primary">
+            {% if question_index == total_questions - 1 %}Complete{% else %}Next{% endif %}
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+$(document).ready(function() {
+    // CSRF Setup for all AJAX requests
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!/^(GET|HEAD|POST|OPTIONS|TRACE)$/i.test(settings.type)) {
+                xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token() }}');
+            }
+        }
+    });
+
+    // Timer functionality
+    let examTimer;
+    const startTime = new Date().getTime();
+    const timeLimit = {{ session.exam.time_limit }} * 1000; // Convert to milliseconds
+
+    function updateTimer() {
+        const currentTime = new Date().getTime();
+        const elapsed = currentTime - startTime;
+        const remaining = Math.max(0, timeLimit - elapsed);
+
+        const minutes = Math.floor(remaining / (1000 * 60));
+        const seconds = Math.floor((remaining % (60000)) / 1000);
+
+        document.getElementById('timer').textContent =
+            `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+        if (remaining <= 0) {
+            clearInterval(examTimer);
+            alert('Time is up! Your exam will be submitted automatically.');
+            window.location.href = "{{ url_for('main.finish_exam') }}";
+        }
+    }
+
+    // Initialize timer
+    examTimer = setInterval(updateTimer, 1000);
+    updateTimer();
+
+    // Answer selection
+    document.querySelectorAll('.option-item').forEach(option => {
+        option.addEventListener('click', function() {
+            const container = this.closest('#options-container');
+            container.querySelectorAll('.option-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            this.classList.add('selected');
+
+            const answerIndex = this.dataset.optionIndex;
+
+            // Submit answer to server
+            fetch("{{ url_for('main.submit_answer') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': "{{ csrf_token() }}"  // Add CSRF token
+                },
+                body: JSON.stringify({
+                    question_id: "{{ question.id }}",
+                    answer_index: parseInt(answerIndex)
+                })
+              }
+            )
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {console.error('Error:', data.error);
+                }
+             });
+        });
+    });
+
+    // Navigation buttons
+    document.getElementById('prev-btn').addEventListener('click', function() {
+        window.location.href = "{{ url_for('main.prev_question') }}";
+    });
+
+    document.getElementById('next-btn').addEventListener('click', function() {
+        window.location.href = "{{ url_for('main.next_question') }}";
+    });
+
+    document.getElementById('finish-exam-btn').addEventListener('click', function() {
+        if (confirm('Are you sure you want to finish the exam? You cannot return after submitting.')) {
+            window.location.href = "{{ url_for('main.finish_exam') }}";
+        }
+    });
+
+    // Review button
+    document.getElementById('flag-btn').addEventListener('click', function() {
+        const btn = this;
+        const questionId = "{{ question.id }}";
+
+        fetch("{{ url_for('main.toggle_review') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': "{{ csrf_token() }}"  // Add CSRF token
+            },
+            body: JSON.stringify({ question_id: questionId })
+        })
+        .then(response => response.json())
+        .then(data => {
+                if (!data.success) {
+                    console.error('Error:', data.error);
+                }
+                if (data.success) {
+                    btn.classList.toggle('text-yellow-500');
+                    const icon = btn.querySelector('i');
+                    icon.classList.toggle('far');
+                    icon.classList.toggle('fas');
+                }
+        });
+    });
+
+    // Initialize selected answer
+    const selectedAnswer = {{ session.exam.answers[question.id].selected if question.id in session.exam.answers else -1 }};
+    if (selectedAnswer >= 0) {
+        const option = document.querySelector(`.option-item[data-option-index="${selectedAnswer}"]`);
+        if (option) option.classList.add('selected');
+    }
+
+    // Initialize review status
+    const isReviewed = {{ question.id in session.exam.review | lower }};
+    if (isReviewed) {
+        const btn = document.getElementById('flag-btn');
+        btn.classList.add('text-yellow-500');
+        const icon = btn.querySelector('i');
+        icon.classList.remove('far');
+        icon.classList.add('fas');
+    }
+});
+</script>
+{% endblock %}

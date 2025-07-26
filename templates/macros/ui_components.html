@@ -1,0 +1,38 @@
+{% macro topic_card(topic) %}
+<!--Topic Card-->
+<a href="{{ url_for('main.set_selection', topic_id=topic.topic_id) }}" class="topic-card">
+    <div class="flex items-center mb-3">
+        <i class="fas {{ topic.icon }} text-3xl text-blue-500 mr-4"></i>
+        <h3 class="text-xl font-bold">{{ topic.title }}</h3>
+    </div>
+    <p class="text-gray-600 dark:text-gray-300">{{ topic.description }}</p>
+</a>
+{% endmacro %}
+
+{% macro set_card(set_data,topic_id, index) %}
+<button class="set-card"
+        data-topic-id="{{ topic_id }}"
+     data-set-id="{{ set_data.set_id }}">
+<!--         data-topic-id="{{ topic_id }}"-->
+<!--     data-set-name="{{ set_data.name | slugify }}">-->
+    <h3 class="text-xl font-bold text-blue-600 dark:text-blue-400">
+        {{ set_data.name }}
+    </h3>
+    <div class="mt-2 flex flex-wrap gap-2">
+        <span class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-sm">
+            <i class="fas fa-question-circle mr-1"></i>
+            {{ set_data.questions | length }} questions
+        </span>
+        <span class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-sm">
+            <i class="fas fa-clock mr-1"></i>
+            {% if set_data.questions | length <= 30 %}45 min
+            {% elif set_data.questions | length <= 60 %}90 min
+            {% else %}120 min{% endif %}
+        </span>
+        <span class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-sm">
+            <i class="fas fa-chart-bar mr-1"></i>
+            {{ set_data.difficulty | title }}
+        </span>
+    </div>
+</button>
+{% endmacro %}

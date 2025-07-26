@@ -1,0 +1,100 @@
+# Create project structure
+mkdir skillcertify
+cd skillcertify
+mkdir config, core, data, logs, static, templates, tests
+mkdir templates/macros
+mkdir static/css, static/js, static/images
+mkdir tests/unit, tests/integration
+mkdir data/question_banks
+
+# Create configuration files
+New-Item config/__init__.py
+New-Item config/settings.py
+New-Item config/logging_config.py
+New-Item core/__init__.py
+New-Item core/question_bank_loader.py
+New-Item core/exam_manager.py
+New-Item core/security.py
+New-Item .env
+New-Item .gitignore
+New-Item requirements.txt
+New-Item app.py
+New-Item wsgi.py
+
+# Create template files
+New-Item templates/base.html
+New-Item templates/home.html
+New-Item templates/set_selection.html
+New-Item templates/exam_start.html
+New-Item templates/exam.html
+New-Item templates/post_exam.html
+New-Item templates/report.html
+New-Item templates/macros/ui_components.html
+
+# Create sample data files
+New-Item data/topics_manifest.json
+New-Item data/question_banks/java.json
+New-Item data/question_banks/aws.json
+
+
+Populate .gitignore:
+---------------------
+Set-Content .gitignore @"
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyc
+.env
+venv/
+
+# Logs
+logs/*.log
+
+# Environment
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Database
+*.sqlite3
+*.db
+
+# IDE
+.vscode/
+.idea/
+"@
+
+
+Populate requirements.txt:
+----------------------------
+
+Set-Content requirements.txt @"
+Flask==2.3.2
+python-dotenv==1.0.0
+Werkzeug==2.3.6
+blinker==1.6.2
+"@
+
+
+Populate .env:
+----------
+
+Set-Content .env @"
+# Flask Settings
+SECRET_KEY="your_secure_secret_key"
+
+# Question Bank Settings
+QB_MANIFEST_PATH="data/topics_manifest.json"
+QB_DATA_DIR="data/question_banks/"
+
+# Logging Settings
+LOG_LEVEL="INFO"
+LOG_FILE="logs/app.log"
+ERROR_LOG_FILE="logs/errors.log"
+"@

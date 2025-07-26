@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% import "macros/ui_components.html" as ui %}
+
+{% block title %}{{ topic.title }} Sets - SkillCertify{% endblock %}
+{% block head_extra %}
+<style>
+     .set-card {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: 1.5rem;
+        background-color: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        transition: all 0.3s ease;
+    }
+
+    .set-card:hover {
+        transform: translateY(-1.50rem);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    .dark .set-card {
+        background-color: #1f2937;
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="py-8">
+    <div class="text-center mb-10">
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-2">
+            {{ topic.title }} Exam Sets
+        </h1>
+        <p class="text-lg text-gray-600 dark:text-gray-400">
+            Select a practice set to begin
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        {% for set in topic.exam_sets %}
+            {{ ui.set_card(set,topic.topic_id, loop.index) }}
+        {% else %}
+            <div class="col-span-full text-center py-10">
+                <p class="text-gray-500 dark:text-gray-400">
+                    No exam sets available for this topic
+                </p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    console.log("All set cards:", document.querySelectorAll('.set-card'));
+document.querySelectorAll('.set-card').forEach(card => {
+console.log("Card dataset:", card.dataset);
+    card.addEventListener('click', function() {
+        const topicId = this.dataset.topicId;
+        const setId = this.dataset.setId;
+
+        // Validate values before navigation
+        if (topicId && setId) {
+            window.location.href = `/start-exam/${topicId}/${setId}`;
+        } else {
+            console.error("Missing data for navigation", {topicId, setId});
+        }
+    });
+})
+</script>
+{% endblock %}
+{% endblock %}

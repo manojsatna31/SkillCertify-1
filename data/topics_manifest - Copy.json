@@ -1,0 +1,16 @@
+[
+  {
+    "topic_id": "java",
+    "filename": "java.json",
+    "title": "Java",
+    "description": "Core Java concepts, OOP, collections, and more.",
+    "icon": "fa-mug-hot"
+  },
+  {
+    "topic_id": "aws",
+    "filename": "AWS-AI-Practitioner.json",
+    "title": "AWS AI Practitioner",
+    "description": "Foundational concepts of AI/ML services on AWS.",
+    "icon": "fa-brain"
+  }
+]

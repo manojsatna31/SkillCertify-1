@@ -1,0 +1,173 @@
+{% extends "base.html" %} {% import "macros/ui_components.html" as ui %} {%
+block title %}Exam - SkillCertify{% endblock %} {% block head_extra %}
+<style>
+    .option-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        border: 2px solid #d1d5db;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-bottom: 0.75rem;
+    }
+
+    .option-item:hover {
+        border-color: rgb(var(--color-primary));
+    }
+
+    .option-item.selected {
+        border-color: rgb(var(--color-primary));
+        background-color: rgba(var(--color-primary), 0.1);
+    }
+
+    .dark .option-item {
+        border-color: #4b5563;
+    }
+
+    .dark .option-item.selected {
+        background-color: rgba(var(--color-primary), 0.2);
+    }
+
+    .option-selector {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: 2px solid #9ca3af;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+
+    .option-item.selected .option-selector {
+        border-color: rgb(var(--color-primary));
+        background-color: rgb(var(--color-primary));
+    }
+
+    .option-item.selected .option-selector::after {
+        content: "";
+        display: block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: white;
+    }
+
+    .dark .option-item.selected .option-selector::after {
+        background: #1f2937;
+    }
+
+    .review-navigation {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin: 1.5rem 0;
+    }
+
+    .review-info {
+        background-color: rgba(var(--color-primary), 0.1);
+        border-left: 4px solid rgb(var(--color-primary));
+        padding: 0.75rem 1rem;
+        margin: 1rem 0;
+        border-radius: 0.25rem;
+        font-size: 0.875rem;
+    }
+
+    .dark .review-info {
+        background-color: rgba(var(--color-primary), 0.2);
+    }
+
+    .review-count {
+        font-weight: 600;
+        color: rgb(var(--color-primary));
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    /* --- CORRECTED MODAL STYLES --- */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: none;
+        /* Initially hidden */
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        opacity: 0;
+        pointer-events: none;
+        /* Prevents clicks when hidden */
+        transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+        /* Becomes a flex container when active */
+        opacity: 1;
+        pointer-events: auto;
+        /* Allows clicks when active */
+    }
+
+    .modal-content {
+        background-color: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        width: 90%;
+        max-width: 400px;
+        transform: translateY(20px);
+        transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.active .modal-content {
+        transform: translateY(0);
+    }
+
+    .dark .modal-content {
+        background-color: #1f2937;
+    }
+</style>
+{% endblock %} {% block content %}
+<!-- Exam Start Confirmation Screen -->
+<div class="py-8">    
+    
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-8 text-left">
+        <div class="text-center mb-10">
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-4">
+            Exam Start Confirmation
+        </h1>
+        <p class="text-lg md:text-xl text-gray-600 dark:text-gray-300">
+            Please review the exam details below before starting.
+        </p>
+    </div>
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+                <p class="text-gray-600 dark:text-gray-400">Total Questions</p>
+                <p class="font-bold text-lg" id="total-questions">65</p>
+            </div>
+            <div>
+                <p class="text-gray-600 dark:text-gray-400">Time Limit</p>
+                <p class="font-bold text-lg" id="time-limit">90 minutes</p>
+            </div>
+            <div>
+                <p class="text-gray-600 dark:text-gray-400">Passing Score</p>
+                <p class="font-bold text-lg" id="passing-score">75%</p>
+            </div>
+            <div>
+                <p class="text-gray-600 dark:text-gray-400">Difficulty</p>
+                <p class="font-bold text-lg" id="difficulty">Medium</p>
+            </div>
+        </div>
+        <p class="text-gray-600 dark:text-gray-400 italic">
+            This exam will test your knowledge across all key areas. Make sure you
+            have enough time to complete it without interruptions.
+        </p>
+    </div>
+</div>
+{% endblock %}

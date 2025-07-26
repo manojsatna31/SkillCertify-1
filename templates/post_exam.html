@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% import "macros/ui_components.html" as ui %}
+
+{% block title %}Exam Results - SkillCertify{% endblock %}
+
+{% block content %}
+<div class="py-12 text-center">
+    <div class="mb-10">
+        {% if report.score >= 75 %}
+        <i class="fas fa-check-circle text-6xl text-green-500 mb-4"></i>
+        <h2 class="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-2">
+            Congratulations! You Passed!
+        </h2>
+        {% else %}
+        <i class="fas fa-times-circle text-6xl text-red-500 mb-4"></i>
+        <h2 class="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-2">
+            Exam Completed
+        </h2>
+        {% endif %}
+        <p class="text-lg text-gray-600 dark:text-gray-400">
+             You've completed the {{ report.topic }} exam
+
+        </p>
+    </div>
+
+    <div class="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 mb-10">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+            <div class="text-center">
+                <div class="text-4xl font-bold
+                    {% if report.score >= 75 %}text-green-500{% else %}text-red-500{% endif %}">
+                    {{ report.score }}%
+                </div>
+                <p class="text-gray-600 dark:text-gray-400">Score</p>
+            </div>
+            <div class="text-center">
+                <div class="text-4xl font-bold text-blue-500">{{ report.total_questions }}</div>
+                <p class="text-gray-600 dark:text-gray-400">Questions</p>
+            </div>
+            <div class="text-center">
+                <div class="text-4xl font-bold text-green-500">{{ report.correct_answers }}</div>
+                <p class="text-gray-600 dark:text-gray-400">Correct</p>
+            </div>
+            <div class="text-center">
+                <div class="text-4xl font-bold text-red-500">{{ report.incorrect_answers }}</div>
+                <p class="text-gray-600 dark:text-gray-400">Incorrect</p>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <div class="flex items-center justify-center">
+                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4">
+                    <div class="h-4 rounded-full
+                        {% if report.score >= 75 %}bg-green-500{% else %}bg-red-500{% endif %}"
+                         style="width: {{ report.score }}%">
+                    </div>
+                </div>
+                <span class="ml-4 font-bold
+                    {% if report.score >= 75 %}text-green-500{% else %}text-red-500{% endif %}">
+                    {% if report.score >= 75 %}Passed{% else %}Failed{% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex justify-center space-x-4">
+        <a href="{{ url_for('main.home') }}" class="btn btn-secondary px-6 py-3">
+            Back to Topics
+        </a>
+        {# Update the "View Detailed Report" button #}
+        <a href="{{ url_for('main.exam_report') }}" class="btn btn-success px-6 py-3">
+            View Detailed Report
+        </a>
+    </div>
+</div>
+{% endblock %}

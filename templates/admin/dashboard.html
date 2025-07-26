@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - SkillCertify{% endblock %}
+
+{% block content %}
+<div class="py-8">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-2xl font-bold">Question Bank Admin</h1>
+        <a href="{{ url_for('main.home') }}" class="btn btn-secondary">
+            ← Back to Site
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <h2 class="text-lg font-bold mb-4">Statistics</h2>
+            <div class="space-y-3">
+                <div class="flex justify-between">
+                    <span>Total Topics:</span>
+                    <span class="font-bold">{{ topics|length }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Total Question Sets:</span>
+                    <span class="font-bold">42</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Total Questions:</span>
+                    <span class="font-bold">1,250</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-span-2 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <h2 class="text-lg font-bold mb-4">Topics</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead>
+                        <tr>
+                            <th class="px-4 py-3 text-left">Topic</th>
+                            <th class="px-4 py-3 text-left">Sets</th>
+                            <th class="px-4 py-3 text-left">Questions</th>
+                            <th class="px-4 py-3 text-left">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                        {% for topic in topics %}
+                        <tr>
+                            <td class="px-4 py-3">
+                                <div class="flex items-center">
+                                    <i class="{{ topic.icon }} mr-2 text-blue-500"></i>
+                                    {{ topic.title }}
+                                </div>
+                            </td>
+                            <td class="px-4 py-3">3</td>
+                            <td class="px-4 py-3">250</td>
+                            <td class="px-4 py-3">
+                                <a href="{{ url_for('main.admin_topic', topic_id=topic.topic_id) }}"
+                                   class="btn btn-primary btn-sm mr-2">
+                                    Manage
+                                </a>
+                                <button class="btn btn-secondary btn-sm">
+                                    Export
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

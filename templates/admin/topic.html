@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Manage {{ topic.title }} - SkillCertify Admin{% endblock %}
+
+{% block content %}
+<div class="py-8">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-bold">{{ topic.title }} Management</h1>
+            <p class="text-gray-600 dark:text-gray-400">{{ topic.description }}</p>
+        </div>
+        <a href="{{ url_for('main.admin_dashboard') }}" class="btn btn-secondary">
+            ← Back to Dashboard
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold">Question Sets</h2>
+                    <button class="btn btn-primary">
+                        <i class="fas fa-plus mr-2"></i> Add Set
+                    </button>
+                </div>
+
+                <div class="space-y-4">
+                    {% for exam_set in topic.exam_sets %}
+                    <div class="border rounded-lg p-4">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-bold">{{ exam_set.name }}</h3>
+                            <div class="flex space-x-2">
+                                <button class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-pencil"></i>
+                                </button>
+                                <button class="btn btn-danger btn-sm">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-400 mt-2">
+                            {{ exam_set.questions|length }} questions
+                        </p>
+                        <div class="mt-4 flex flex-wrap gap-2">
+                            <button class="btn btn-primary btn-sm">
+                                Add Question
+                            </button>
+                            <button class="btn btn-secondary btn-sm">
+                                Preview
+                            </button>
+                            <button class="btn btn-secondary btn-sm">
+                                Export
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                <h2 class="text-lg font-bold mb-4">Topic Details</h2>
+                <form>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 dark:text-gray-300 mb-2">Title</label>
+                        <input type="text" value="{{ topic.title }}"
+                               class="w-full px-3 py-2 border rounded-md">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 dark:text-gray-300 mb-2">Description</label>
+                        <textarea class="w-full px-3 py-2 border rounded-md" rows="3">{{ topic.description }}</textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 dark:text-gray-300 mb-2">Icon Class</label>
+                        <input type="text" value="{{ topic.icon }}"
+                               class="w-full px-3 py-2 border rounded-md">
+                    </div>
+                    <div class="flex justify-end space-x-2">
+                        <button type="button" class="btn btn-secondary">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mt-6">
+                <h2 class="text-lg font-bold mb-4">Danger Zone</h2>
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="font-bold text-red-600 mb-2">Export Topic Data</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                            Export all questions and sets in JSON format
+                        </p>
+                        <button class="btn btn-secondary">
+                            <i class="fas fa-download mr-2"></i> Export
+                        </button>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-red-600 mb-2">Delete Topic</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                            Permanently delete this topic and all its content
+                        </p>
+                        <button class="btn btn-danger">
+                            <i class="fas fa-trash mr-2"></i> Delete Topic
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

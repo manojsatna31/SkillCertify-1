@@ -1,0 +1,492 @@
+{% extends "base.html" %}
+{% import "macros/ui_components.html" as ui %}
+
+{% block title %}Exam - SkillCertify{% endblock %}
+
+{% block head_extra %}
+<style>
+    .option-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        border: 2px solid #d1d5db;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-bottom: 0.75rem;
+    }
+
+    .option-item:hover {
+        border-color: rgb(var(--color-primary));
+    }
+
+    .option-item.selected {
+        border-color: rgb(var(--color-primary));
+        background-color: rgba(var(--color-primary), 0.1);
+    }
+
+    .dark .option-item {
+        border-color: #4b5563;
+    }
+
+    .dark .option-item.selected {
+        background-color: rgba(var(--color-primary), 0.2);
+    }
+
+    .option-selector {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: 2px solid #9ca3af;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+
+    .option-item.selected .option-selector {
+        border-color: rgb(var(--color-primary));
+        background-color: rgb(var(--color-primary));
+    }
+
+    .option-item.selected .option-selector::after {
+        content: "";
+        display: block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: white;
+    }
+
+    .dark .option-item.selected .option-selector::after {
+        background: #1f2937;
+    }
+
+    .review-navigation {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin: 1.5rem 0;
+    }
+
+    .review-info {
+        background-color: rgba(var(--color-primary), 0.1);
+        border-left: 4px solid rgb(var(--color-primary));
+        padding: 0.75rem 1rem;
+        margin: 1rem 0;
+        border-radius: 0.25rem;
+        font-size: 0.875rem;
+    }
+
+    .dark .review-info {
+        background-color: rgba(var(--color-primary), 0.2);
+    }
+
+    .review-count {
+        font-weight: 600;
+        color: rgb(var(--color-primary));
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    /* --- CORRECTED MODAL STYLES --- */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: none; /* Initially hidden */
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        opacity: 0;
+        pointer-events: none; /* Prevents clicks when hidden */
+        transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+        display: flex; /* Becomes a flex container when active */
+        opacity: 1;
+        pointer-events: auto; /* Allows clicks when active */
+    }
+
+    .modal-content {
+        background-color: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        width: 90%;
+        max-width: 400px;
+        transform: translateY(20px);
+        transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.active .modal-content {
+        transform: translateY(0);
+    }
+
+    .dark .modal-content {
+        background-color: #1f2937;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="exam-container py-6">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h2 class="text-xl font-bold text-gray-800 dark:text-white">
+                {{ set_name }}
+            </h2>
+            <div class="mt-2">
+                <div class="text-sm text-gray-500 dark:text-gray-400">Time Remaining</div>
+                <div id="timer" class="text-2xl font-mono font-bold text-red-600 dark:text-red-400">
+                    89:21
+                </div>
+            </div>
+        </div>
+        <a href="{{ url_for('main.home') }}" class="btn btn-secondary text-sm">
+            ← Exit Exam
+        </a>
+    </div>
+    <!-- Review info banner -->
+    <div id="review-info" class="review-info {% if review|length == 0 %}hidden{% endif %}">
+        You have <span id="review-count" class="review-count">{{ review|length }}</span>
+        question{% if review|length != 1 %}s{% endif %} marked for review
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg mb-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-600 dark:text-gray-400">
+                Question {{ question_index + 1 }} of {{ total_questions }}
+            </h3>
+            <div class="flex space-x-2">
+                <button id="flag-btn" class="btn btn-secondary text-sm"
+                        data-question-id="{{ question.id }}">
+                    <i class="far fa-flag"></i> Review
+                </button>
+            </div>
+        </div>
+
+        <div class="text-xl font-medium mb-6 text-gray-900 dark:text-white">
+            {{ question.question_text }}
+        </div>
+
+        <div id="options-container" class="space-y-3">
+            {% for option in question.options %}
+            <div class="option-item" data-option-index="{{ loop.index0 }}">
+                <div class="option-selector"></div>
+                <div class="option-text">{{ option }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <!-- Review Navigation -->
+    {% if review|length > 1 %}
+    <div class="review-navigation">
+        <button id="prev-review-btn" class="btn btn-secondary">
+            ← Previous Review
+        </button>
+        <button id="next-review-btn" class="btn btn-secondary">
+            Next Review →
+        </button>
+    </div>
+    {% endif %}
+
+    <div class="flex justify-between items-center">
+        <button id="prev-btn"
+                class="btn btn-primary {% if question_index == 0 %}opacity-50 cursor-not-allowed{% endif %}"
+                {% if question_index== 0 %}disabled{% endif %}>
+            Previous
+        </button>
+
+        <div class="flex space-x-2">
+            <button id="finish-exam-btn" class="btn btn-danger">
+                Finish Exam
+            </button>
+        </div>
+
+        <button id="next-btn" class="btn btn-primary">
+            {% if question_index == total_questions - 1 %}Complete{% else %}Next{% endif %}
+        </button>
+    </div>
+    <!-- Finish Confirmation Modal -->
+    <div id="finish-confirm-modal" class="hidden fixed inset-0 z-50 items-center justify-center p-4 bg-black/50">
+        <div class="modal-content">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 max-w-md w-full border-l-4 border-yellow-500">
+                <div class="flex items-start gap-3 mb-4">
+                    <div class="text-yellow-500 text-2xl mt-0.5">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800 dark:text-white">Finish Exam?</h3>
+                        <p id="finish-confirm-message" class="text-gray-600 dark:text-gray-300 mt-1">
+                            <!-- Message will be inserted here -->
+                        </p>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button id="finish-confirm-cancel" class="btn btn-secondary px-5">Cancel</button>
+                    <button id="finish-confirm-submit" class="btn btn-danger px-5">Submit Exam</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+$(document).ready(function() {
+    // ======================
+    // 1. CONFIGURATION SETUP
+    // ======================
+    const config = {
+        startTime: {{ start_time }} * 1000,
+        timeLimit: {{ time_limit }} * 1000,
+        questionId: "{{ question.id }}",
+        csrfToken: "{{ csrf_token() }}",
+        isReviewed: {{ (question.id in review) | lower }},
+        reviewCount: {{ review|length }},
+        selectedAnswer: {{ answers[question.id].selected if question.id in answers else -1 }},
+        urls: {
+            submitAnswer: "{{ url_for('main.submit_answer') }}",
+            toggleReview: "{{ url_for('main.toggle_review') }}",
+            prevReview: "{{ url_for('main.prev_review') }}",
+            nextReview: "{{ url_for('main.next_review') }}",
+            finishExam: "{{ url_for('main.finish_exam') }}",
+            prevQuestion: "{{ url_for('main.prev_question') }}",
+            nextQuestion: "{{ url_for('main.next_question') }}"
+        }
+    };
+
+    // ======================
+    // 2. TIMER FUNCTIONALITY
+    // ======================
+    function initTimer() {
+        const clientNow = new Date().getTime();
+        const elapsed = clientNow - config.startTime;
+        const totalRemaining = Math.max(0, config.timeLimit - elapsed);
+
+        let examTimer;
+
+        function updateTimer() {
+            const now = new Date().getTime();
+            const localElapsed = now - clientNow;
+            const remaining = Math.max(0, totalRemaining - localElapsed);
+
+            const minutes = Math.floor(remaining / (1000 * 60));
+            const seconds = Math.floor((remaining % 60000) / 1000);
+
+            $("#timer").text(
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+            );
+
+            if (remaining <= 0) {
+                clearInterval(examTimer);
+                alert("Time is up! Your exam will be submitted.");
+                window.location.href = config.urls.finishExam;
+            }
+        }
+
+        examTimer = setInterval(updateTimer, 1000);
+        updateTimer();
+    }
+
+    // ======================
+    // 3. ANSWER SELECTION
+    // ======================
+    function initAnswerSelection() {
+        $('.option-item').on('click', function() {
+            const container = $(this).closest('#options-container');
+            container.find('.option-item').removeClass('selected');
+            $(this).addClass('selected');
+
+            const answerIndex = $(this).data('option-index');
+
+            // Submit answer to server
+            fetch(config.urls.submitAnswer, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': config.csrfToken
+                },
+                body: JSON.stringify({
+                    question_id: config.questionId,
+                    answer_index: parseInt(answerIndex)
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    console.error('Error:', data.error);
+                }
+            });
+        });
+    }
+
+    // ======================
+    // 4. NAVIGATION BUTTONS
+    // ======================
+    function initNavigation() {
+        $('#prev-btn').on('click', function() {
+            window.location.href = config.urls.prevQuestion;
+        });
+
+        $('#next-btn').on('click', function() {
+            window.location.href = config.urls.nextQuestion;
+        });
+    }
+
+    // ======================
+    // 5. REVIEW FUNCTIONALITY
+    // ======================
+    function initReviewSystem() {
+        // Initialize review button state
+        if (config.isReviewed) {
+            $('#flag-btn').addClass('text-yellow-500');
+            $('#flag-btn i').removeClass('far').addClass('fas');
+        }
+
+        // Toggle review status
+        $('#flag-btn').on('click', function() {
+            const btn = $(this);
+
+            fetch(config.urls.toggleReview, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': config.csrfToken
+                },
+                body: JSON.stringify({ question_id: config.questionId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Toggle button visual state
+                    btn.toggleClass('text-yellow-500');
+                    btn.find('i').toggleClass('far fas');
+
+                    // Update review count display
+                    const reviewCount = data.review_count;
+                    config.reviewCount = reviewCount; // Update config
+                    $('#review-count').text(reviewCount);
+
+                    // Show/hide review info banner
+                    const reviewInfo = $('#review-info');
+                    if (reviewCount > 0) {
+                        reviewInfo.removeClass('hidden');
+                    } else {
+                        reviewInfo.addClass('hidden');
+                    }
+
+                    // Show/hide navigation buttons (only for 2+ reviews)
+                    if (reviewCount > 1) {
+                        $('.review-navigation').show();
+                    } else {
+                        $('.review-navigation').hide();
+                    }
+                }
+            });
+        });
+
+        // Review navigation buttons
+        $('#prev-review-btn').on('click', function() {
+            fetch(config.urls.prevReview)
+                .then(response => {
+                    if (response.ok) window.location.reload();
+                });
+        });
+
+        $('#next-review-btn').on('click', function() {
+            fetch(config.urls.nextReview)
+                .then(response => {
+                    if (response.ok) window.location.reload();
+                });
+        });
+    }
+
+    // ======================
+    // 6. FINISH EXAM MODAL
+    // ======================
+    function initFinishModal() {
+        const finishModal = $('#finish-confirm-modal');
+        const finishMessage = $('#finish-confirm-message');
+
+        // Show modal when finish button is clicked
+        $('#finish-exam-btn').on('click', function() {
+            const reviewCount = config.reviewCount;
+
+            if (reviewCount > 0) {
+                finishMessage.html(`
+                    You have <span class="font-bold text-yellow-600">${reviewCount} questions</span>
+                    marked for review. Are you sure you want to submit without reviewing them?
+                `);
+            } else {
+                finishMessage.text('Are you sure you want to finish the exam?');
+            }
+
+            finishModal.removeClass('hidden').addClass('flex');
+        });
+
+        // Handle cancel button
+        $('#finish-confirm-cancel').on('click', function(e) {
+            e.stopPropagation();
+            finishModal.removeClass('flex').addClass('hidden');
+        });
+
+        // Handle submit button
+        $('#finish-confirm-submit').on('click', function(e) {
+            e.stopPropagation();
+            window.location.href = config.urls.finishExam;
+        });
+
+        // Close modal when clicking outside
+        finishModal.on('click', function(e) {
+            if (e.target === this) {
+                finishModal.removeClass('flex').addClass('hidden');
+            }
+        });
+    }
+
+    // ======================
+    // 7. INITIALIZATION
+    // ======================
+    function initializePage() {
+        // Initialize selected answer
+        if (config.selectedAnswer >= 0) {
+            $(`.option-item[data-option-index="${config.selectedAnswer}"]`).addClass('selected');
+        }
+
+        // Initialize review navigation visibility
+        if (config.reviewCount > 1) {
+            $('.review-navigation').show();
+        } else {
+            $('.review-navigation').hide();
+        }
+    }
+
+    // ======================
+    // 8. START ALL FUNCTIONALITY
+    // ======================
+    function init() {
+        initTimer();
+        initAnswerSelection();
+        initNavigation();
+        initReviewSystem();
+        initFinishModal();
+        initializePage();
+    }
+
+    // Start the exam functionality
+    init();
+});
+</script>
+{% endblock %}
